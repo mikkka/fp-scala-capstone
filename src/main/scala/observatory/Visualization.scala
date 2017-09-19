@@ -79,7 +79,13 @@ object Visualization {
     * @return The color that corresponds to `value`, according to the color scale defined by `points`
     */
   def interpolateColor(points: Iterable[(Double, Color)], value: Double): Color = {
-    val sortedPoints = points.toArray.sortBy(_._1)
+    interpolateColor(points.toArray, value, isSorted = false)
+  }
+
+  def interpolateColor(points: Array[(Double, Color)], value: Double, isSorted: Boolean): Color = {
+    val sortedPoints =
+      if (isSorted) points else points.sortBy(_._1)
+
     val pairOpt = sortedPoints.sliding(2).find{p =>
       p(0)._1 <= value && p(1)._1 >= value
     }
@@ -98,7 +104,30 @@ object Visualization {
     * @return A 360×180 image where each pixel shows the predicted temperature at its location
     */
   def visualize(temperatures: Iterable[(Location, Double)], colors: Iterable[(Double, Color)]): Image = {
-    ???
+    val sortedColors = colors.toArray.sortBy(_._1)
+    val locations = for {
+      lat <- -90  until 90
+      lon <- -180 until 180
+    } yield (lat.toDouble, lon.toDouble)
+
+    val pixels = locations.toArray.par.map {loc =>
+      val temp = predictTemperature(temperatures, Location(loc._1, loc._2))
+      val color = interpolateColor(sortedColors, temp, true)
+      Pixel(color.red, color.green, color.blue, 255)
+    }.toArray
+
+    Image(360, 180, pixels)
   }
+
+  val colorTable: Array[(Double, Color)] = Array(
+    (60,  Color(255, 255, 255)),
+    (32,  Color(255, 0,   0)),
+    (12,  Color(255, 255, 0)),
+    (0,   Color(0,   255, 255)),
+    (-15, Color(0  , 0,   255)),
+    (-27, Color(255, 0,   255)),
+    (-50, Color(33 , 0,   107)),
+    (-60, Color(0  , 0,   0))
+  )
 }
 
