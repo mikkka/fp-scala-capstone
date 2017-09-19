@@ -106,7 +106,7 @@ object Visualization {
   def visualize(temperatures: Iterable[(Location, Double)], colors: Iterable[(Double, Color)]): Image = {
     val sortedColors = colors.toArray.sortBy(_._1)
     val locations = for {
-      lat <- -90  until 90
+      lat <- 90  until -90 by -1
       lon <- -180 until 180
     } yield (lat.toDouble, lon.toDouble)
 
